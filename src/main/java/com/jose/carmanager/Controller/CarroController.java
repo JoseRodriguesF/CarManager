@@ -1,5 +1,6 @@
 package com.jose.carmanager.Controller;
 
+import java.util.NoSuchElementException;
 import com.jose.carmanager.Model.Carro;
 import com.jose.carmanager.Service.CarroService;
 import jakarta.validation.Valid;
@@ -34,7 +35,7 @@ public class CarroController {
 
     // Endpoint para salvar um novo carro
     @PostMapping
-    public ResponseEntity<?> salvarCarro(@Valid @RequestBody Carro carro) {
+    public ResponseEntity<?> salvarCarro( @RequestBody Carro carro) {
         try {
             Carro salvo = carroService.saveCarro(carro);
             return ResponseEntity.status(HttpStatus.CREATED).body(salvo);
@@ -66,6 +67,25 @@ public class CarroController {
         }
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateCarro(@PathVariable Long id, @RequestBody Carro carroAtualizado) {
+        try {
+            Carro carro = carroService.updateCarro(id, carroAtualizado);
+            return ResponseEntity.ok(carro); // 200 OK com o carro atualizado
+
+        } catch (NoSuchElementException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Erro: " + ex.getMessage());
+
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Erro: " + ex.getMessage());
+
+        } catch (Exception ex) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Erro interno ao atualizar o carro. Detalhes: " + ex.getMessage());
+        }
+    }
 
 }
 

@@ -4,6 +4,8 @@ import com.jose.carmanager.Model.Carro;
 import com.jose.carmanager.Repository.CarroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import java.util.NoSuchElementException;
+
 
 import java.util.List;
 
@@ -29,9 +31,10 @@ public class CarroService {
         }
     }
     public boolean deleteCarro(Long id) {
-        if (id == null || id.isBlank()) {
-            throw new IllegalArgumentException("ID não pode ser nulo ou vazio.");
+        if (id == null) {
+            throw new IllegalArgumentException("ID não pode ser nulo.");
         }
+
 
         try {
             if (carroRepository.existsById(id)) {
@@ -43,6 +46,24 @@ public class CarroService {
 
         } catch (Exception e) {
             throw new RuntimeException("Erro ao acessar o banco de dados: " + e.getMessage());
+        }
+    }
+    public Carro updateCarro(Long id, Carro novoCarro) {
+        if (id == null) {
+            throw new IllegalArgumentException("ID não pode ser nulo ou vazio.");
+        }
+
+        try {
+            if (carroRepository.existsById(id)) {
+                // Garante que o ID do objeto seja o mesmo
+                novoCarro.setId(id);
+                return carroRepository.save(novoCarro);
+            } else {
+                throw new NoSuchElementException("Carro com ID " + id + " não encontrado.");
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao atualizar o carro: " + e.getMessage());
         }
     }
 

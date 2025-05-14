@@ -32,6 +32,4 @@ public class Carro {
     @NotBlank(message = "O campo valor não pode ser vazio")
     private double valor;
 
-    private Binary foto;
-
 }
