@@ -51,7 +51,7 @@ public class CarroController {
             boolean deleted = carroService.deleteCarro(id);
 
             if (deleted) {
-                return ResponseEntity.noContent().build(); // 204 - sucesso, sem corpo
+                return ResponseEntity.status(HttpStatus.OK).body("Carro deletado com sucesso.");
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body("Erro: carro com ID " + id + " não encontrado.");

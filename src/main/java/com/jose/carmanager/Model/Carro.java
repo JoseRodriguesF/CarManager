@@ -31,5 +31,8 @@ public class Carro {
     @NotNull(message = "O campo valor é obrigatório")
     @NotBlank(message = "O campo valor não pode ser vazio")
     private double valor;
+    @NotNull(message = "O campo caminhoFoto é obrigatório")
+    @NotBlank(message = "O campo caminhoFoto não pode ser vazio")
+    private String caminhoFoto;
 
 }
