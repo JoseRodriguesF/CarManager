@@ -5,7 +5,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
-
 public interface CarroRepository extends MongoRepository<Carro, Long> {
     List<Carro> findByModeloIgnoreCaseContaining(String modelo);
 }

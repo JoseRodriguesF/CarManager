@@ -13,6 +13,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Importações do Swagger
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 @RestController
 @RequestMapping("api/carros")
 public class CarroController {
@@ -20,7 +28,10 @@ public class CarroController {
     @Autowired
     CarroService carroService;
 
-
+    @Operation(summary = "Lista todos os carros", description = "Retorna uma lista de todos os carros cadastrados.")
+    @ApiResponse(responseCode = "200", description = "Lista de carros encontrada", content = @Content(schema = @Schema(implementation = Carro[].class)))
+    @ApiResponse(responseCode = "204", description = "Nenhum carro encontrado")
+    @ApiResponse(responseCode = "500", description = "Erro interno ao buscar carros")
     @GetMapping
     public ResponseEntity<?> getAllCarros() {
         try {
@@ -40,8 +51,15 @@ public class CarroController {
         }
     }
 
+    @Operation(summary = "Busca carros por modelo", description = "Retorna carros que correspondem ao modelo informado.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Carros encontrados", content = @Content(schema = @Schema(implementation = Carro[].class))),
+            @ApiResponse(responseCode = "204", description = "Nenhum carro encontrado para o modelo"),
+            @ApiResponse(responseCode = "500", description = "Erro interno ao buscar carros por modelo")
+    })
     @GetMapping("/modelo/{modelo}")
-    public ResponseEntity<?> getCarrosByModelo(@PathVariable String modelo) {
+    public ResponseEntity<?> getCarrosByModelo(
+            @Parameter(description = "Modelo do carro a ser pesquisado") @PathVariable String modelo) {
         try {
             List<Carro> carros = carroService.getCarrosByModelo(modelo);
             if (carros.isEmpty()) {
@@ -59,8 +77,14 @@ public class CarroController {
         }
     }
 
+    @Operation(summary = "Salva um novo carro", description = "Cadastra um novo carro no sistema.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Carro salvo com sucesso"),
+            @ApiResponse(responseCode = "500", description = "Erro ao salvar o carro")
+    })
     @PostMapping
-    public ResponseEntity<?> salvarCarro(@RequestBody Carro carro) {
+    public ResponseEntity<?> salvarCarro(
+            @RequestBody(description = "Dados do carro a ser cadastrado") @Valid Carro carro) {
         try {
             Carro salvo = carroService.saveCarro(carro);
             Map<String, Object> response = new HashMap<>();
@@ -75,8 +99,16 @@ public class CarroController {
         }
     }
 
+    @Operation(summary = "Deleta um carro pelo ID", description = "Remove um carro do sistema pelo seu ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Carro deletado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "ID inválido"),
+            @ApiResponse(responseCode = "404", description = "Carro não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno ao deletar o carro")
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCarro(@PathVariable Long id) {
+    public ResponseEntity<?> deleteCarro(
+            @Parameter(description = "ID do carro a ser deletado") @PathVariable Long id) {
         try {
             boolean deleted = carroService.deleteCarro(id);
             Map<String, Object> response = new HashMap<>();
@@ -102,8 +134,17 @@ public class CarroController {
         }
     }
 
+    @Operation(summary = "Atualiza um carro pelo ID", description = "Atualiza os dados de um carro existente pelo seu ID.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Carro atualizado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "ID inválido"),
+            @ApiResponse(responseCode = "404", description = "Carro não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno ao atualizar o carro")
+    })
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateCarro(@PathVariable Long id, @RequestBody Carro carroAtualizado) {
+    public ResponseEntity<?> updateCarro(
+            @Parameter(description = "ID do carro a ser atualizado") @PathVariable Long id,
+            @RequestBody(description = "Dados atualizados do carro") @Valid Carro carroAtualizado) {
         try {
             Carro carro = carroService.updateCarro(id, carroAtualizado);
             Map<String, Object> response = new HashMap<>();
