@@ -6,6 +6,7 @@ import java.util.NoSuchElementException;
 import com.jose.carmanager.Model.Carro;
 import com.jose.carmanager.Service.CarroService;
 import jakarta.validation.Valid;
+import org.bson.types.Binary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("api/carros")
@@ -57,15 +59,15 @@ public class CarroController {
             @ApiResponse(responseCode = "204", description = "Nenhum carro encontrado para o modelo"),
             @ApiResponse(responseCode = "500", description = "Erro interno ao buscar carros por modelo")
     })
-    @GetMapping("/modelo/{modelo}")
+    @GetMapping("/marca/{marca}")
     public ResponseEntity<?> getCarrosByModelo(
-            @Parameter(description = "Modelo do carro a ser pesquisado") @PathVariable String modelo) {
+            @Parameter(description = "Modelo do carro a ser pesquisado") @PathVariable String marca) {
         try {
-            List<Carro> carros = carroService.getCarrosByModelo(modelo);
+            List<Carro> carros = carroService.getCarrosByMarca(marca);
             if (carros.isEmpty()) {
                 Map<String, Object> response = new HashMap<>();
                 response.put("status", 204);
-                response.put("message", "Nenhum carro encontrado para o modelo: " + modelo);
+                response.put("message", "Nenhum carro encontrado para o modelo: " + marca);
                 return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
             }
             return ResponseEntity.status(HttpStatus.OK).body(carros);
@@ -82,19 +84,34 @@ public class CarroController {
             @ApiResponse(responseCode = "201", description = "Carro salvo com sucesso"),
             @ApiResponse(responseCode = "500", description = "Erro ao salvar o carro")
     })
-    @PostMapping
+    @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> salvarCarro(
-            @RequestBody(description = "Dados do carro a ser cadastrado") @Valid Carro carro) {
+            @RequestParam("modelo") String modelo,
+            @RequestParam("marca") String marca,
+            @RequestParam("ano_fabricacao") int anoFabricacao,
+            @RequestParam("quilometragem") int quilometragem,
+            @RequestParam("valor") double valor,
+            @RequestParam("file") MultipartFile file) {
         try {
+            Carro carro = new Carro();
+            carro.setModelo(modelo);
+            carro.setMarca(marca);
+            carro.setAno_fabricacao(anoFabricacao);
+            carro.setQuilometragem(quilometragem);
+            carro.setValor(valor);
+            if (file != null && !file.isEmpty()) {
+                carro.setFoto(new Binary(file.getBytes()));
+            }
             Carro salvo = carroService.saveCarro(carro);
             Map<String, Object> response = new HashMap<>();
             response.put("status", 201);
             response.put("message", "Carro salvo com sucesso! ID: " + salvo.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception ex) {
+            ex.printStackTrace(); // Log no console para debug
             Map<String, Object> response = new HashMap<>();
             response.put("status", 500);
-            response.put("message", "Erro ao salvar o carro. Tente novamente mais tarde.");
+            response.put("message", "Erro ao salvar o carro: " + ex.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
@@ -108,7 +125,7 @@ public class CarroController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteCarro(
-            @Parameter(description = "ID do carro a ser deletado") @PathVariable Long id) {
+            @Parameter(description = "ID do carro a ser deletado") @PathVariable String id) {
         try {
             boolean deleted = carroService.deleteCarro(id);
             Map<String, Object> response = new HashMap<>();
@@ -141,12 +158,26 @@ public class CarroController {
             @ApiResponse(responseCode = "404", description = "Carro não encontrado"),
             @ApiResponse(responseCode = "500", description = "Erro interno ao atualizar o carro")
     })
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = "multipart/form-data")
     public ResponseEntity<?> updateCarro(
-            @Parameter(description = "ID do carro a ser atualizado") @PathVariable Long id,
-            @RequestBody(description = "Dados atualizados do carro") @Valid Carro carroAtualizado) {
+            @Parameter(description = "ID do carro a ser atualizado") @PathVariable String id,
+            @RequestParam("modelo") String modelo,
+            @RequestParam("marca") String marca,
+            @RequestParam("ano_fabricacao") int anoFabricacao,
+            @RequestParam("quilometragem") int quilometragem,
+            @RequestParam("valor") double valor,
+            @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
-            Carro carro = carroService.updateCarro(id, carroAtualizado);
+            Carro novoCarro = new Carro();
+            novoCarro.setModelo(modelo);
+            novoCarro.setMarca(marca);
+            novoCarro.setAno_fabricacao(anoFabricacao);
+            novoCarro.setQuilometragem(quilometragem);
+            novoCarro.setValor(valor);
+            if (file != null && !file.isEmpty()) {
+                novoCarro.setFoto(new org.bson.types.Binary(file.getBytes()));
+            }
+            Carro carro = carroService.updateCarro(id, novoCarro);
             Map<String, Object> response = new HashMap<>();
             response.put("status", 200);
             response.put("message", "Carro atualizado com sucesso! ID: " + carro.getId());
@@ -166,6 +197,25 @@ public class CarroController {
             response.put("status", 500);
             response.put("message", "Erro interno ao atualizar o carro.");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @Operation(summary = "Busca um carro pelo ID", description = "Retorna o carro correspondente ao ID informado.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Carro encontrado", content = @Content(schema = @Schema(implementation = Carro.class))),
+            @ApiResponse(responseCode = "404", description = "Carro não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno ao buscar o carro")
+    })
+    @GetMapping("/{id}")
+    public ResponseEntity<?> buscarCarroPorId(
+            @Parameter(description = "ID do carro a ser pesquisado") @PathVariable String id) {
+        try {
+            Carro carro = carroService.buscarPorId(id); // Chama o serviço para buscar o carro
+            return ResponseEntity.ok(carro); // Retorna 200 e o carro encontrado
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Carro não encontrado."); // Retorna 404 caso não encontrado
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno ao buscar o carro."); // Retorna 500 para erros gerais
         }
     }
 }

@@ -30,15 +30,15 @@ public class CarroService {
         try {
             return carroRepository.save(carro);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao salvar o carro. Tente novamente mais tarde.");
+            e.printStackTrace();
+            throw new RuntimeException("Erro ao salvar o carro. " + e.getMessage());
         }
     }
 
-    public boolean deleteCarro(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("ID não pode ser nulo.");
+    public boolean deleteCarro(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID não pode ser nulo ou vazio.");
         }
-
         try {
             if (!carroRepository.existsById(id)) {
                 return false;
@@ -50,19 +50,26 @@ public class CarroService {
         }
     }
 
-    public Carro updateCarro(Long id, Carro novoCarro) {
-        if (id == null) {
-            throw new IllegalArgumentException("ID não pode ser nulo.");
+    public Carro updateCarro(String id, Carro novoCarro) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID não pode ser nulo ou vazio.");
         }
         if (novoCarro == null) {
             throw new IllegalArgumentException("O objeto carro para atualização não pode ser nulo.");
         }
-
         try {
             return carroRepository.findById(id)
                     .map(car -> {
-                        novoCarro.setId(id);
-                        return carroRepository.save(novoCarro);
+                        car.setModelo(novoCarro.getModelo());
+                        car.setMarca(novoCarro.getMarca());
+                        car.setAno_fabricacao(novoCarro.getAno_fabricacao());
+                        car.setQuilometragem(novoCarro.getQuilometragem());
+                        car.setValor(novoCarro.getValor());
+                        // Atualiza a foto somente se nova foto for enviada
+                        if (novoCarro.getFoto() != null) {
+                            car.setFoto(novoCarro.getFoto());
+                        }
+                        return carroRepository.save(car);
                     })
                     .orElseThrow(() -> new NoSuchElementException("Carro com ID " + id + " não encontrado."));
         } catch (NoSuchElementException e) {
@@ -72,15 +79,28 @@ public class CarroService {
         }
     }
 
-    public List<Carro> getCarrosByModelo(String modelo) {
-        if (modelo == null || modelo.trim().isEmpty()) {
+    public List<Carro> getCarrosByMarca(String marca) {
+        if (marca == null || marca.trim().isEmpty()) {
             throw new IllegalArgumentException("O parâmetro modelo não pode ser nulo ou vazio.");
         }
         try {
-            return carroRepository.findByModeloIgnoreCaseContaining(modelo);
+            return carroRepository.findByModeloIgnoreCaseContaining(marca);
         } catch (Exception e) {
             throw new RuntimeException("Erro ao buscar carros pelo modelo: " + e.getMessage());
         }
     }
-}
 
+    public Carro buscarPorId(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID não pode ser nulo ou vazio.");
+        }
+        try {
+            return carroRepository.findById(id)
+                    .orElseThrow(() -> new NoSuchElementException("Carro com ID " + id + " não encontrado."));
+        } catch (NoSuchElementException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao buscar o carro pelo ID: " + e.getMessage(), e);
+        }
+    }
+}

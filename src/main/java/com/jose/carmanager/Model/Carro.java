@@ -3,6 +3,7 @@ package com.jose.carmanager.Model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.bson.types.Binary;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -12,8 +13,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class Carro {
 
     @Id
-    @Schema(description = "ID do carro", example = "1")
-    private Long id;
+    @Schema(description = "ID do carro", example = "134tgfghrt444")
+    private String id;
 
     @NotNull(message = "O campo modelo é obrigatório")
     @NotBlank(message = "O campo modelo não pode ser vazio")
@@ -37,8 +38,5 @@ public class Carro {
     @Schema(description = "Valor do carro", example = "75000.00")
     private double valor;
 
-    @NotNull(message = "O campo caminhoFoto é obrigatório")
-    @NotBlank(message = "O campo caminhoFoto não pode ser vazio")
-    @Schema(description = "Caminho ou URL da foto do carro", example = "https://exemplo.com/fotos/carro1.jpg")
-    private String caminhoFoto;
+    private Binary foto;
 }
