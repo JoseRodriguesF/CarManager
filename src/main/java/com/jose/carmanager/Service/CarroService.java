@@ -79,17 +79,6 @@ public class CarroService {
         }
     }
 
-    public List<Carro> getCarrosByMarca(String marca) {
-        if (marca == null || marca.trim().isEmpty()) {
-            throw new IllegalArgumentException("O parâmetro modelo não pode ser nulo ou vazio.");
-        }
-        try {
-            return carroRepository.findByModeloIgnoreCaseContaining(marca);
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao buscar carros pelo modelo: " + e.getMessage());
-        }
-    }
-
     public Carro buscarPorId(String id) {
         if (id == null || id.trim().isEmpty()) {
             throw new IllegalArgumentException("ID não pode ser nulo ou vazio.");

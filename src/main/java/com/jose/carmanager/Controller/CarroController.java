@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import com.jose.carmanager.Model.Carro;
 import com.jose.carmanager.Service.CarroService;
-import jakarta.validation.Valid;
 import org.bson.types.Binary;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -53,31 +52,25 @@ public class CarroController {
         }
     }
 
-    @Operation(summary = "Busca carros por modelo", description = "Retorna carros que correspondem ao modelo informado.")
+    @Operation(summary = "Busca um carro pelo ID", description = "Retorna o carro correspondente ao ID informado.")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Carros encontrados", content = @Content(schema = @Schema(implementation = Carro[].class))),
-            @ApiResponse(responseCode = "204", description = "Nenhum carro encontrado para o modelo"),
-            @ApiResponse(responseCode = "500", description = "Erro interno ao buscar carros por modelo")
+            @ApiResponse(responseCode = "200", description = "Carro encontrado", content = @Content(schema = @Schema(implementation = Carro.class))),
+            @ApiResponse(responseCode = "404", description = "Carro não encontrado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno ao buscar o carro")
     })
-    @GetMapping("/marca/{marca}")
-    public ResponseEntity<?> getCarrosByModelo(
-            @Parameter(description = "Modelo do carro a ser pesquisado") @PathVariable String marca) {
+    @GetMapping("/{id}")
+    public ResponseEntity<?> buscarCarroPorId(
+            @Parameter(description = "ID do carro a ser pesquisado") @PathVariable String id) {
         try {
-            List<Carro> carros = carroService.getCarrosByMarca(marca);
-            if (carros.isEmpty()) {
-                Map<String, Object> response = new HashMap<>();
-                response.put("status", 204);
-                response.put("message", "Nenhum carro encontrado para o modelo: " + marca);
-                return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
-            }
-            return ResponseEntity.status(HttpStatus.OK).body(carros);
-        } catch (Exception ex) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("status", 500);
-            response.put("message", "Erro interno ao buscar carros por modelo.");
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            Carro carro = carroService.buscarPorId(id); // Chama o serviço para buscar o carro
+            return ResponseEntity.ok(carro); // Retorna 200 e o carro encontrado
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Carro não encontrado."); // Retorna 404 caso não encontrado
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno ao buscar o carro."); // Retorna 500 para erros gerais
         }
     }
+
 
     @Operation(summary = "Salva um novo carro", description = "Cadastra um novo carro no sistema.")
     @ApiResponses(value = {
@@ -200,22 +193,4 @@ public class CarroController {
         }
     }
 
-    @Operation(summary = "Busca um carro pelo ID", description = "Retorna o carro correspondente ao ID informado.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Carro encontrado", content = @Content(schema = @Schema(implementation = Carro.class))),
-            @ApiResponse(responseCode = "404", description = "Carro não encontrado"),
-            @ApiResponse(responseCode = "500", description = "Erro interno ao buscar o carro")
-    })
-    @GetMapping("/{id}")
-    public ResponseEntity<?> buscarCarroPorId(
-            @Parameter(description = "ID do carro a ser pesquisado") @PathVariable String id) {
-        try {
-            Carro carro = carroService.buscarPorId(id); // Chama o serviço para buscar o carro
-            return ResponseEntity.ok(carro); // Retorna 200 e o carro encontrado
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Carro não encontrado."); // Retorna 404 caso não encontrado
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro interno ao buscar o carro."); // Retorna 500 para erros gerais
-        }
-    }
 }
