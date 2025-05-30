@@ -41,7 +41,7 @@ CarManager é um aplicativo móvel desenvolvido com React Native e Expo para ger
 
 ## 🔄 Integração com Backend
 
-### API Deployada
+### API Deploy
 A API está hospedada no Render e pode ser acessada em:
 ```
 https://carmanager-jftp.onrender.com/api/carros
